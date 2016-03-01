@@ -10,7 +10,7 @@ import javax.microedition.khronos.opengles.GL10;
  * Created by Kiwi on 2016/2/17.
  */
 public class Cube {
-    private FloatBuffer vertexBuffer;  // Buffer for vertex-array
+    private FloatBuffer vertexBuffer;  // Buffer
     private int numFaces = 6;
 
     private float[][] colors = {  // Colors of the 6 faces (R,G,B,A)
@@ -56,6 +56,7 @@ public class Cube {
     };
 
 
+
     public Cube() {
         // Setup vertex-array buffer. Vertices in float. An float has 4 bytes
         ByteBuffer vbb = ByteBuffer.allocateDirect(vertices.length * 4);
@@ -63,6 +64,7 @@ public class Cube {
         vertexBuffer = vbb.asFloatBuffer(); // Convert from byte to float
         vertexBuffer.put(vertices);         // Copy data into buffer
         vertexBuffer.position(0);           // Rewind
+
     }
 
 
@@ -76,12 +78,13 @@ public class Cube {
 
         // 繪製每一面圖形
         for (int face = 0; face < numFaces; face++) {
-            // glColor4f(R,G,B,A)
-            gl.glColor4f(colors[face][0], colors[face][1], colors[face][2], colors[face][3]);
-            // glDrawArrays(選擇繪製模式,從第幾組數組開始,頂點數)
-            gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, face*4, 4);
+            gl.glColor4f(colors[face][0], colors[face][1], colors[face][2], colors[face][3]);// (R,G,B,A)
+            gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, face*4, 4); // (選擇繪製模式,從第幾組數組開始,頂點數)
         }
         gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
         gl.glDisable(GL10.GL_CULL_FACE);
+
+
+
     }
 }

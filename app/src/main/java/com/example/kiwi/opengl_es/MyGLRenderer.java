@@ -3,6 +3,7 @@ package com.example.kiwi.opengl_es;
 import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.opengl.GLU;
+import android.util.Log;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -23,25 +24,30 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
     private float angleQuad = 0.0f;     // 同上
     private float speedTriangle = 0.5f; // 正向旋轉
     private float speedQuad = -0.4f;    // 反向旋轉
-    /*======================2D===========================*/
 
     /*======================3D===========================*/
     private Pyramid pyramid;
     private Cube cube;
+    private Light light;
 
     private static float anglePyramid = 0.0f;
     private static float angleCube = 0.0f;
-    private static float speedPyramid = 2.0f;
-    private static float speedCube = -1.5f;
-    /*======================3D===========================*/
+    private static float angleLight = 0.0f;
+    private static float speedPyramid = 1.0f;
+    private static float speedCube = 1.0f;
+    private static float speedLight = 1.0f;
+    private static float currect_light_position[] = { 0.0f, 0.0f, 0.0f};
+
 
     public MyGLRenderer(Context context) {
         this.context = context;
         // 初始化三角形正方形金字塔立方體各自的緩衝區
-        triangle = new Triangle();
-        quad = new Square();
+        //triangle = new Triangle();
+        //quad = new Square();
         pyramid = new Pyramid();
         cube = new Cube();
+        light = new Light();
+
     }
 
     @Override
@@ -49,6 +55,7 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         gl.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);  // 為顏色緩衝區指定正確的值 glClearColor(R,G,B,A)
         gl.glClearDepthf(1.0f);            // 深度值小於1.0f的物體都可被看見
         gl.glEnable(GL10.GL_DEPTH_TEST);   // 用於啟用各種功能，其功能要由參數決定。
+
                                            // GL_DEPTH_TEST=深度測試，根據座標遠近自動隱藏被遮住的圖形
         gl.glDepthFunc(GL10.GL_LEQUAL);    // 深度緩衝比較值，如果輸入的數值小於或等於參考值，則通過
         gl.glHint(GL10.GL_PERSPECTIVE_CORRECTION_HINT, GL10.GL_NICEST);  // 該函數在控制OpenGL在某一方
@@ -63,9 +70,10 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
                                            // 抖動算法，對于可用顔色較少的系統，可以以犧牲分辨率爲代價，
                                            // 通過顔色值的抖動來增加可用顏色數量
 
+
+
+
     }
-
-
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
@@ -88,10 +96,44 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
                                             // GL_MODELVIEW = 模型矩陣
         gl.glLoadIdentity();    // 將OpenGL中的矩陣設為模組矩陣
 
-        // You OpenGL|ES display re-sizing code here
-        // ......
-
     }
+
+//    static void glShadowProjection(float[] l, float[] e, float[] n)
+//    {
+//        float d, c;
+//        float mat[16];
+//
+//// These are c and d (corresponding to the tutorial)
+//
+//        d = n[0]*l[0] + n[1]*l[1] + n[2]*l[2];
+//        c = e[0]*n[0] + e[1]*n[1] + e[2]*n[2] - d;
+//
+//// Create the matrix. OpenGL uses column by column
+//// ordering
+//
+//        mat[0]  = l[0]*n[0]+c;
+//        mat[4]  = n[1]*l[0];
+//        mat[8]  = n[2]*l[0];
+//        mat[12] = -l[0]*c-l[0]*d;
+//
+//        mat[1]  = n[0]*l[1];
+//        mat[5]  = l[1]*n[1]+c;
+//        mat[9]  = n[2]*l[1];
+//        mat[13] = -l[1]*c-l[1]*d;
+//
+//        mat[2]  = n[0]*l[2];
+//        mat[6]  = n[1]*l[2];
+//        mat[10] = l[2]*n[2]+c;
+//        mat[14] = -l[2]*c-l[2]*d;
+//
+//        mat[3]  = n[0];
+//        mat[7]  = n[1];
+//        mat[11] = n[2];
+//        mat[15] = -d;
+//
+//// Finally multiply the matrices together *plonk*
+//        glMultMatrixf(mat);
+//    }
 
     @Override
     public void onDrawFrame(GL10 gl) {
@@ -119,7 +161,6 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
 //
 //        //以下註解為單純顯示圖像(不旋轉)用途
 //        //gl.glTranslatef(3.0f, 0.0f, 0.0f);  // 同理，向右平移3.0個單位
-//        //                                    // ** 但是正方形卻不用移動z軸！！！ wtf **
 //
 //        gl.glLoadIdentity();                  // Reset the mode-view matrix (NEW)
 //        gl.glTranslatef(1.5f, 0.0f, -6.0f);   // 向右平移1.5個單位，z軸移動-6.0個單位
@@ -135,30 +176,52 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         /*======================2D===========================*/
 
         /*======================3D===========================*/
-        gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);    // 清除螢幕和深度緩衝區
-//                                                                          // GL_COLOR_BUFFER_BITGL_COLOR_BUFFER_BIT
-//                                                                          // 當前可寫的顏色緩衝
-//                                                                          // GL_DEPTH_BUFFER_BITGL_DEPTH_BUFFER_BIT
-//                                                                          // 深度緩衝
+        gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);  // 清除螢幕和深度緩衝區
+//                                                                           GL_COLOR_BUFFER_BITGL_COLOR_BUFFER_BIT
+//                                                                           當前可寫的顏色緩衝
+//                                                                           GL_DEPTH_BUFFER_BITGL_DEPTH_BUFFER_BIT
+//                                                                           深度緩衝
+
+
+
+
+        // ----- 繪製立方體 -----
+        gl.glLoadIdentity();
+
+        gl.glTranslatef(1.5f, 0.0f, -6.0f);
+        gl.glScalef(0.8f, 0.8f, 0.8f);      // 三軸放大/縮小(倍數)，可改變模型長寬高外觀
+        gl.glRotatef(angleCube, 1.0f, 0.0f, 0.0f);
+        cube.draw(gl);
+
+
+        // ------反轉聚光燈的視角角度------- //
+        if(currect_light_position[0] <= -180.0f){
+            currect_light_position[0] = 0.0f;
+            currect_light_position[1] = 0.0f;
+            currect_light_position[2] = 0.0f;
+        }
+        currect_light_position[0] += -1.0f;
+        currect_light_position[1] += -1.0f;
+        currect_light_position[2] += -1.0f;
+        Log.d("正確燈光位置", ""+currect_light_position[0]+currect_light_position[1]+currect_light_position[2]);
 
         // ----- 繪製金字塔 -----
         gl.glLoadIdentity();
+
         gl.glTranslatef(-1.5f, 0.0f, -6.0f);
         gl.glRotatef(anglePyramid, 0.1f, 1.0f, -0.1f);
         pyramid.draw(gl);
 
-        // ----- 繪製立方體 -----
+        // ----- 繪製聚光燈 -----
         gl.glLoadIdentity();
-        gl.glTranslatef(1.5f, 0.0f, -6.0f);
-        gl.glScalef(0.8f, 0.8f, 0.8f);      // 三軸放大/縮小(倍數)，可改變模型長寬高外觀
-        gl.glRotatef(angleCube, 1.0f, 1.0f, 1.0f);
-        cube.draw(gl);
+        gl.glTranslatef(0.0f, 0.0f, 0.0f);
+        gl.glRotatef(angleLight, currect_light_position[0], currect_light_position[1], currect_light_position[2]);
+        light.draw(gl);
 
 
         anglePyramid += speedPyramid;
         angleCube += speedCube;
-        /*======================3D===========================*/
-
+        angleLight += speedLight;
 
     }
 }
